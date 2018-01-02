@@ -1,0 +1,31 @@
+{
+    "name": "vanillin-web",
+    "private": true,
+    "version": "1.0.0",
+    "main": "index.js",
+    "homepage": "https://louisgv.github.io/vanillin/",
+    "license": "SEE LICENSE IN ../../LICENSE",
+    "dependencies": {
+        "react": "^16.1.1",
+        "react-dom": "^16.1.1",
+        "react-dom-animated": "^1.0.3",
+        "react-router-dom": "^4.2.2",
+        "react-scripts": "1.0.17",
+        "react-transition-group": "^2.2.1",
+        "semantic-ui-react": "^0.76.0",
+        "styled-components": "^2.2.3",
+        "styled-media-query": "^2.0.1",
+        "vanillin-facilitator": "^1.0.0"
+    },
+    "scripts": {
+        "start": "react-scripts start",
+        "build": "react-scripts build",
+        "test": "react-scripts test --env=jsdom",
+        "eject": "react-scripts eject",
+        "predeploy": "npm run build",
+        "deploy": "gh-pages -d build"
+    },
+    "devDependencies": {
+        "gh-pages": "^1.0.0"
+    }
+}

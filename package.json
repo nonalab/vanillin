@@ -4,7 +4,7 @@
         "bootstrap": "lerna bootstrap",
         "test": "lerna run test",
         "prepare": "lerna run prepare",
-        "clean": "rimraf packages/**/lib"
+        "clean": "rimraf packages/**/lib packages/**/build"
     },
     "devDependencies": {
         "lerna": "^2.5.1",

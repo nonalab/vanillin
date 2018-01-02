@@ -40,4 +40,16 @@ contract('VanillinFacilitator', function ([alice, bob]) {
 		assert.equal(firedEvent.args.ipfsRef, ipfsB)
 	});
 
+    it('should finalize and emit IPFSOnly', async function () {
+		const facilitatorInstance = await VanillinFacilitator.deployed();
+
+		// Alice reply back to Bob with her ipfs address
+		facilitatorInstance.finalize(bob, ipfsA)
+
+		const firedEvent = await waitForEvent(facilitatorInstance, 'IPFSOnly')
+
+		assert.equal(firedEvent.args.to, bob)
+		assert.equal(firedEvent.args.ipfsRef, ipfsA)
+	});
+
 });

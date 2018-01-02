@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300');
+body, noscript {
+	margin: 0;
+	padding: 0;
+	font-family: 'Open Sans', sans-serif;
+	overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+	margin: 0;
+	padding: 0;
+}
+
+h3 {
+	font-size: 1.8em;
+}
+
+p {
+	font-size: 1.35em;
+}
+
+a {
+	color: orange;
+}
+
+hr.section-decorator {
+	width: 4.5em;
+}
+
+/* Rainbow text shadow */
+
+.rainbow {
+	box-sizing: content-box;
+	cursor: pointer;
+	border: none;
+	font: Helvetica, sans-serif;
+	color: rgba(0, 0, 0, 0);
+	text-align: center;
+	text-overflow: clip;
+
+	text-shadow:
+	-1.8px 0 0 rgb(217,31,38) ,
+	-1.8px 0 0 rgb(226,91,14) ,
+	-1.8px 0 0 rgb(245,221,8) ,
+	-1.8px 0 0 rgb(5,148,68) ,
+	-1.8px 0 0 rgb(2,135,206) ,
+	-1.8px 0 0 rgb(4,77,145) ,
+	-1.8px 0 0 rgb(42,21,113);
+
+	transition: all 600ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.rainbow.active,
+.rainbow:hover {
+	font-weight: 100;
+	letter-spacing: 0.18em;
+
+	text-shadow:
+	0.9px 0 0 rgba(217,31,38, 0.85) ,
+	1.8px 0 0 rgba(226,91,14,0.75) ,
+	3.6px 0 0 rgba(245,221,8,0.8) ,
+	7.2px 0 0 rgba(5,148,68,0.85) ,
+	14.4px 0 0 rgba(2,135,206,0.9) ,
+	28.8px 0 0 rgba(4,77,145,0.95) ,
+	57.6px 0 0 rgba(42,21,113, 1) ;
+}
+
+.rainbow.mobile {
+	animation: rainbow-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes rainbow-pulse {
+	0%,
+	100% {
+		font-weight: 100;
+		letter-spacing: 0.18em;
+		text-shadow:
+		0.9px 0 0 rgba(217,31,38, 0.85) ,
+		1.8px 0 0 rgba(226,91,14,0.75) ,
+		3.6px 0 0 rgba(245,221,8,0.8) ,
+		7.2px 0 0 rgba(5,148,68,0.85) ,
+		14.4px 0 0 rgba(2,135,206,0.9) ,
+		28.8px 0 0 rgba(4,77,145,0.95) ,
+		57.6px 0 0 rgba(42,21,113, 1) ;
+	}
+	50% {
+		text-shadow:
+		-1.8px 0 0 rgb(217,31,38) ,
+		-1.8px 0 0 rgb(226,91,14) ,
+		-1.8px 0 0 rgb(245,221,8) ,
+		-1.8px 0 0 rgb(5,148,68) ,
+		-1.8px 0 0 rgb(2,135,206) ,
+		-1.8px 0 0 rgb(4,77,145) ,
+		-1.8px 0 0 rgb(42,21,113);
+		font-weight: 900;
+		letter-spacing: normal;
+	}
+}
