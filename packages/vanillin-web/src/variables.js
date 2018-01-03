@@ -1,6 +1,6 @@
 export const BASENAME_MAP = {
     '': '/',
-    'louisgv.github.io': '/twitch-play-crypto'
+    'louisgv.github.io': '/vanillin'
 }
 
 export const AUTHORS = [

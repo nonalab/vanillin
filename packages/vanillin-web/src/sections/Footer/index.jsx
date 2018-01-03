@@ -7,12 +7,12 @@ import {FooterContainer} from 'utils/Layout';
 import {AUTHORS as authors, LICENSE as license} from 'variables';
 
 const StyledFooter = styled(FooterContainer)`
-  line-height: 24px;
-	width: 100vw;
-  color: white;
-  font-size: 1em;
-  text-align: center;
-	padding: 1.8em;
+    line-height: 24px;
+    width: 100vw;
+    color: white;
+    font-size: 1em;
+    text-align: center;
+    padding: 1.8em;
 `;
 
 export default class Footer extends PureComponent {

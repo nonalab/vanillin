@@ -5,15 +5,22 @@ import registerServiceWorker from 'registerServiceWorker';
 
 import TransitionGroup from 'react-transition-group/TransitionGroup';
 
-import {BrowserRouter as Router, Route} from 'react-router-dom';
+import {
+    BrowserRouter as Router,
+    Route
+} from 'react-router-dom';
 
 import AnimatedSwitch from 'components/AnimatedSwitch';
 
 import Home from 'pages/Home';
 
-import {BASENAME_MAP as basenameMap} from 'variables';
+import {
+    BASENAME_MAP as basenameMap
+} from 'variables';
 
-const {location} = window;
+const {
+    location
+} = window;
 
 const basename = basenameMap[location.host]
 
@@ -21,14 +28,14 @@ const basename = basenameMap[location.host]
 const App = () => (<Router basename={basename}>
     <TransitionGroup>
         <AnimatedSwitch>
-            <Route exact="exact" path="/" component={Home}/>
+            <Route exact path="/" component={Home}/>
         </AnimatedSwitch>
     </TransitionGroup>
 </Router>);
 
 const rootEl = document.getElementById('root');
 
-if (rootEl) {
+if(rootEl) {
     ReactDOM.render(<App/>, rootEl);
     registerServiceWorker();
 }

@@ -8,9 +8,9 @@ pragma solidity ^0.4.12;
 */
 contract VanillinFacilitator {
 
-    event IPFSOnly(address from, address indexed to, string ipfsRef, uint timestampt);
-    event DiffieIPFS(address from, address indexed to, string gB, string ipfsRef, uint timestampt);
-    event DiffieOnly(address from, address indexed to, string gA, uint timestampt);
+    event DiffieOnly(address from, address indexed to, string gA, uint timestamp);
+    event DiffieIPFS(address from, address indexed to, string gB, string ipfsRef, uint timestamp);
+    event IPFSOnly(address from, address indexed to, string ipfsRef, uint timestamp);
 
     // sends the diffie helman key (G^A) to user B.
     function init(address to, string gA) public {

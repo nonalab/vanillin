@@ -1,0 +1,12 @@
+{
+  "extends": [
+		"react-app"
+	],
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "rules": {
+    "indent": ["error", 4]
+  }
+}

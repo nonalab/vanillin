@@ -5,6 +5,7 @@
     "license": "SEE LICENSE IN ../../LICENSE",
     "scripts": {
         "build": "truffle compile && babel src -d lib",
+        "watch": "babel src --watch -d lib",
         "deploy": "truffle migrate",
         "test": "truffle test"
     },
@@ -18,8 +19,9 @@
         "bluebird": "^3.5.1",
         "diffie-hellman": "^5.0.2",
         "eventemitter3": "^3.0.0",
-        "ipfs": "^0.27.5",
         "js-sha3": "^0.7.0",
+        "react-input-submit": "^1.0.1",
+        "simple-peer": "^8.2.0",
         "truffle-contract": "^3.0.1",
         "web3": "^1.0.0-beta.27"
     }
