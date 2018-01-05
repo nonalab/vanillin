@@ -5,13 +5,14 @@
     "license": "SEE LICENSE IN ../../LICENSE",
     "scripts": {
         "build": "truffle compile && babel src -d lib",
-        "watch": "babel src --watch -d lib",
-        "deploy": "truffle migrate",
+        "start": "babel src --watch -d lib",
+        "deploy": "rimraf ./build; npm run build; truffle compile; truffle migrate;",
         "test": "truffle test"
     },
     "devDependencies": {
         "babel-cli": "^6.26.0",
         "babel-preset-env": "^1.6.1",
+        "rimraf": "^2.6.2",
         "truffle": "^4.0.4"
     },
     "dependencies": {

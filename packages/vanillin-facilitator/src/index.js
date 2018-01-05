@@ -91,7 +91,9 @@ export default class VanillinFacilitator extends EventEmitter {
         this
             .validEvents
             .map((eventName) => {
-                this.subscribeToContractEvent(contractInstance[eventName]({to: accounts[0]}))
+                this.subscribeToContractEvent(contractInstance[eventName]({
+                    to: accounts[0]
+                }))
             })
 
         this.accountAddress = accounts[0]
@@ -145,11 +147,9 @@ export default class VanillinFacilitator extends EventEmitter {
     /* Abstraction for the contract's call */
 
     sendInvite() {
-        console.log(this.contractInstance);
-
         this
             .contractInstance
-            .init.call(this.otherAddress, this.gx);
+            .init(this.otherAddress, this.gx, {from: this.accountAddress});
     }
 
     async reply(data) {
@@ -297,12 +297,14 @@ export default class VanillinFacilitator extends EventEmitter {
     }
 
     subscribeToContractEvent(eventInstance) {
-        eventInstance.watch((error, result) => {
-            console.error(error);
+        eventInstance.get((error, result) => {
             if (error)
                 this.emit('error', {error})
             console.log(result);
-            this[`on${result.event}`](result.args)
+
+            // if (result.length > 0) {
+            //     this[`on${result.event}`](result.args)
+            // }
         })
     }
 
