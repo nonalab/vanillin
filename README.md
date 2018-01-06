@@ -18,29 +18,12 @@ Vanillin help establish webrtc session between two Ethereum address via a handsh
 
 # Setup
 
-The following prerequiste must be met:
-- yarn@latest
-- node@9
-- lerna@latest
-- truffle@latest
-- ganache@latest
-
-```sh
-$ git clone https://github.com/nonalab/vanillin
-$ cd vanillin
-$ lerna bootstrap
-```
-
-Then you can run:
-
-```sh
-$ lerna run build
-$ lerna run start
-```
+Please refer to `documentations/CONTRIBUTING.md` for setup guide.
 
 # Notes
 
 - Most design question should have an answer in the rfcs  `documentations/rfcs`. Please submit an issue if you think a specification is missing.
+- Notes about each third party library, dependencies and application are in `documentations/notes`
 
 # Donation
 

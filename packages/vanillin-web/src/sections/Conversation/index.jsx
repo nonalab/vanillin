@@ -37,34 +37,31 @@ export default class Conversation extends PureComponent {
         props
             .facilitator
             .on('ready', this.init)
+            .on('signal', console.log)
+            .on('connect', console.log)
+            .on('data', console.log)
     }
+
+    connect = () => {}
 
     init = () => {
         const {accountAddress} = this.props.facilitator;
         this.setState({accountAddress});
     }
 
-    /*
-        A: 0x627306090abaB3A6e1400e9345bC60c78a8BEf57
-        B: 0x821aEa9a577a9b44299B9c15c88cf3087F3b5544
-    */
-
-    sendInvite = async (address) => {
-        this
-            .props
-            .facilitator
-            .setOtherAddress(address)
-            .sendInvite()
-    }
-
     render() {
         return (<Container palette={this.props.palette} id='Conversation'>
-            <Segment inverted>
+            <Segment inverted={true}>
                 <Header as='h3' floated='left' color='green'>Your address:</Header>
                 <Header as='h3' floated='right' color='teal'>{this.state.accountAddress}</Header>
             </Segment>
 
-            <StyledInputSubmit palette='primary' placeholder='Enter Recipent ETH Address' onSubmit={this.sendInvite} buttonText='SEND'/>
+            <StyledInputSubmit
+                palette='primary'
+                placeholder='Enter Recipent ETH Address'
+                onSubmit={(address) => this.props.facilitator.sendInvite(address)}
+                buttonText='SEND'/>
+
         </Container>);
     }
 }

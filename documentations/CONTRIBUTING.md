@@ -29,18 +29,53 @@ contributing, please read the
 
 ## Developing
 
-vanillin is built for Node 9 and up.
-
-Make sure that Yarn is installed with version >= `0.28.0`.
-Installation instructions can be found here: https://yarnpkg.com/en/docs/install.
-
-### Setup
+The following prerequiste must be met:
+- yarn@latest
+- node@9
+- lerna@latest
+- truffle@latest
+- ganache@latest
+- chrome@latest
+- metamsk@latest
 
 ```sh
 $ git clone https://github.com/nonalab/vanillin
 $ cd vanillin
 $ lerna bootstrap
 ```
+
+Run Ganache to have a local testnet. Grab the mnemonic and use it to create your test metamask wallet.
+
+Open Chrome and create 2 profile (DO NOT USE YOUR MAIN PROFILE. WE WILL BE ABUSING METAMASK)
+
+Open MetaMask:
+
+Restore account:
+
+Import some account from Ganache using its private key:
+
+Deploy the contract:
+
+```sh
+$ lerna run deploy
+```
+
+Build the application:
+
+```sh
+$ lerna run build
+```
+
+> NOTE: Lerna can be run from anywhere within a vanillin project, be it root or child module!
+
+Then:
+
+```sh
+cd packages/vanillin-web
+yarn start
+```
+
+In the two Chrome instances, navigate to `https://localhost:3000`
 
 ### Writing tests
 

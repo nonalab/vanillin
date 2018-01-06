@@ -8,6 +8,8 @@ import styled from 'styled-components';
 
 import Conversation from 'sections/Conversation';
 
+import Setting from 'sections/Setting';
+
 import Footer from 'sections/Footer';
 
 import {
@@ -26,7 +28,7 @@ export default class Home extends PureComponent {
 
         this.facilitator = new VanillinFacilitator({web3Provider: window.web3.currentProvider})
         this.facilitator.init()
-        
+
         this.facilitator.on('error', console.error)
     }
 
@@ -34,6 +36,7 @@ export default class Home extends PureComponent {
         return(
             <Container>
                 <Conversation facilitator={this.facilitator}/>
+                <Setting facilitator={this.facilitator}/>
                 <Footer/>
             </Container>
         );

@@ -39,6 +39,8 @@ export default class VanillinFacilitator extends EventEmitter {
 
         this.web3 = new Web3(web3Provider);
 
+        this.receivedHandshakeBlockHashSet = new Set();
+
         const {currentProvider} = this.web3;
 
         /*
@@ -88,19 +90,60 @@ export default class VanillinFacilitator extends EventEmitter {
                     : 0
         ]);
 
-        this
-            .validEvents
-            .map((eventName) => {
-                this.subscribeToContractEvent(contractInstance[eventName]({
-                    to: accounts[0]
-                }))
-            })
-
-        this.accountAddress = accounts[0]
+        this.accountAddress = accounts[0];
 
         this.contractInstance = contractInstance;
 
         this.emit('ready')
+    }
+
+    async startEventWatching(refreshRate = 1800) {
+        const fromBlock = await this
+            .web3
+            .eth
+            .getBlock('latest')
+
+        // An array of interval
+        this.eventWatchers = this
+            .validEvents
+            .map((eventName) => this.subscribeToContractEvent(eventName, fromBlock.number, refreshRate))
+    }
+
+    stopEventWatching() {
+        this
+            .eventWatchers
+            .map((ew) => {
+                clearInterval(ew)
+            })
+    }
+
+    subscribeToContractEvent(eventName, fromBlock, refreshRate) {
+        return setInterval(() => {
+
+            const eventInstance = this.contractInstance[eventName]({
+                to: this.accountAddress
+            }, {fromBlock, to: 'latest'})
+
+            eventInstance.get((error, results) => {
+                if (error)
+                    this.emit('error', {error})
+
+                    // console.log(results);
+
+                const validResult = results
+                    .filter(({args, blockHash}) => this.isTimestampValid(args.timestamp) && !this.receivedHandshakeBlockHashSet.has(blockHash))
+                    .sort((a, b) => a.blockNumber < b.blockNumber)[0]
+
+                if (validResult) {
+                    // console.log(validResult);
+                    this
+                        .receivedHandshakeBlockHashSet
+                        .add(validResult.blockHash);
+
+                    this[`on${validResult.event}`](validResult.args)
+                }
+            })
+        }, refreshRate);
     }
 
     /* Setters for mirror properties */
@@ -123,9 +166,13 @@ export default class VanillinFacilitator extends EventEmitter {
             .hex
             .toBytes(this.otherGX);
 
+        console.log(gxBytes);
+
         const gAB = this
             .dh
             .computeSecret(new Uint8Array(gxBytes));
+
+        console.log(gAB);
 
         this.key = aesjs
             .utils
@@ -144,30 +191,6 @@ export default class VanillinFacilitator extends EventEmitter {
         return timestamp.c[0] * 10e2 > this.initTime
     }
 
-    /* Abstraction for the contract's call */
-
-    sendInvite() {
-        this
-            .contractInstance
-            .init(this.otherAddress, this.gx, {from: this.accountAddress});
-    }
-
-    async reply(data) {
-        console.log(data);
-        const multihash = await this.storeEncrypted(data);
-        console.log(multihash);
-
-        if (this.peer.initiator) {
-            this
-                .contractInstance
-                .reply(this.otherAddress, this.gx, multihash, {from: this.accountAddress});
-        } else {
-            this
-                .contractInstance
-                .sendPayload(this.otherAddress, multihash, {from: this.accountAddress});
-        }
-    }
-
     async storeEncrypted(data) {
         try {
             const encryptedData = this.encrypt(JSON.stringify(data));
@@ -179,7 +202,7 @@ export default class VanillinFacilitator extends EventEmitter {
                 .multihash;
 
         } catch (error) {
-            this.emit('error', {error})
+            this.emit('error', error)
             return null
         }
     }
@@ -253,40 +276,73 @@ export default class VanillinFacilitator extends EventEmitter {
         this
             .peer
             .on('signal', (data) => this.reply(data))
-        // .on('connect', () => this.emit('connect', this.peer))
-        // .on('data', (data) => this.emit('data', data))
-        // .on('stream', (stream) => this.emit('stream', stream))
+            .on('connect', () => this.emit('connect', this.peer))
+            .on('data', (data) => this.emit('data', data))
+            .on('stream', (stream) => this.emit('stream', stream))
+    }
+
+    /* Abstraction for the contract's call */
+
+    sendInvite(address) {
+        this
+            .setOtherAddress(address)
+            .contractInstance
+            .init(this.otherAddress, this.gx, {from: this.accountAddress});
+    }
+
+    async reply(data) {
+        console.log(data);
+        const multihash = await this.storeEncrypted(data);
+        console.log(multihash);
+
+        if (this.peer.initiator) {
+            this
+                .contractInstance
+                .reply(this.otherAddress, this.gx, multihash, {from: this.accountAddress});
+        } else {
+            this
+                .contractInstance
+                .sendPayload(this.otherAddress, multihash, {from: this.accountAddress});
+        }
+    }
+
+    async handleInfo(multihash) {
+        const value = await this.read(multihash)
+
+        const em = value.toString()
+
+        const decryptedData = await this.decrypt(em)
+
+        this.peer.signal(JSON.parse(decryptedData))
+
+        this.emit('token', decryptedData)
     }
 
     /* Contract Event Handlers */
 
     // On receiving initial invite
-    onDiffieOnly({from, gA, timestamp}) {
-        if (!this.isTimestampValid(timestamp))
-            return;
-
-        console.log(timestamp);
-
-        this.setOtherGX(gA);
-        this.setOtherAddress(from);
+    onDiffieOnly({from, gA}) {
+        this
+            .setOtherGX(gA)
+            .setOtherAddress(from);
 
         this.peer = new Peer({initiator: true, trickle: false});
         this.handlePeerEvent();
     }
 
     // On sending reply to invite
-    onDiffieIPFS({gB, ipfsRef, timestamp}) {
-        if (!this.isTimestampValid(timestamp))
-            return;
+    onDiffieIPFS({gB, ipfsRef}) {
+        this.setOtherGX(gB)
 
-        }
+        this.peer = new Peer({initiator: false, trickle: false});
+        this.handlePeerEvent();
+        this.handleInfo(ipfsRef)
+    }
 
     // On finalizing handshake
-    onIPFSOnly({ipfsRef, timestamp}) {
-        if (!this.isTimestampValid(timestamp))
-            return;
-
-        }
+    onIPFSOnly({ipfsRef}) {
+        this.handleInfo(ipfsRef)
+    }
 
     /* Waiting Coroutine */
     async waitFor(eventName) {
@@ -294,18 +350,6 @@ export default class VanillinFacilitator extends EventEmitter {
         return new Promise(function(resolve, reject) {
             self.once(eventName, resolve)
         });
-    }
-
-    subscribeToContractEvent(eventInstance) {
-        eventInstance.get((error, result) => {
-            if (error)
-                this.emit('error', {error})
-            console.log(result);
-
-            // if (result.length > 0) {
-            //     this[`on${result.event}`](result.args)
-            // }
-        })
     }
 
 }
