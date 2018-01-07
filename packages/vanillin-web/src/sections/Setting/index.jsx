@@ -31,6 +31,7 @@ export default class Setting extends PureComponent {
         props
             .facilitator
             .on('ready', this.init)
+            .on('connect', this.toggleHandshakeWatching)
     }
 
     init = async () => {
@@ -41,7 +42,7 @@ export default class Setting extends PureComponent {
         this.setState({watching: true,});
     }
 
-    toggleHandshakeWatching= async()=>{
+    toggleHandshakeWatching = async() => {
         const {facilitator} = this.props;
         const {watching, refreshRate} = this.state
 

@@ -1,13 +1,10 @@
 import 'babel-polyfill';
 
 import aesjs from 'aes-js';
+import {ec as ECDH} from 'elliptic';
 
 import EventEmitter from 'eventemitter3';
 import Promise from 'bluebird';
-
-import {getDiffieHellman} from 'diffie-hellman/browser';
-
-import {shake_128} from 'js-sha3';
 
 import contract from 'truffle-contract';
 import truffleSchema from '../build/contracts/VanillinFacilitator.json';
@@ -26,20 +23,28 @@ export default class VanillinFacilitator extends EventEmitter {
         web3Provider = new Web3
             .providers
             .HttpProvider('http://localhost:7545'),
-        repo = 'vanillin'
+        repo = 'vanillin',
+        swarm = []
     }) {
         super();
 
         // Use this to grab all event
         this.validEvents = ['IPFSOnly', 'DiffieIPFS', 'DiffieOnly'];
 
-        this.initTime = Date.now();
+        // Using seconds cuz ETH contract use that
+        this.initTime = Date.now() / 1000;
+
+        this.ecdh = new ECDH('curve25519')
+
+        this.inviteHashSet = new Set()
+
+        this.keypair = this
+            .ecdh
+            .genKeyPair()
 
         console.log(this.initTime);
 
         this.web3 = new Web3(web3Provider);
-
-        this.receivedHandshakeBlockHashSet = new Set();
 
         const {currentProvider} = this.web3;
 
@@ -59,14 +64,21 @@ export default class VanillinFacilitator extends EventEmitter {
         this.facilitatorContract = contract(truffleSchema);
         this
             .facilitatorContract
-            .setProvider(currentProvider);
+            .setProvider(currentProvider)
         this
             .facilitatorContract
             .defaults({gas: 4e6})
 
-        this.dh = getDiffieHellman('modp16');
-
-        this.ipfs = new IPFS({repo})
+        this.ipfs = new IPFS({
+            repo,
+            config: {
+                Addresses: {
+                    Swarm: [
+                        '/dns4/ws-star.discovery.libp2p.io/tcp/443/wss/p2p-websocket-star', ...swarm
+                    ]
+                }
+            }
+        })
 
         this
             .ipfs
@@ -125,22 +137,26 @@ export default class VanillinFacilitator extends EventEmitter {
             }, {fromBlock, to: 'latest'})
 
             eventInstance.get((error, results) => {
-                if (error)
+                if (error) {
                     this.emit('error', {error})
+                }
 
-                    // console.log(results);
+                // if (results.length > 0) {
+                //     console.log(eventName);
+                //     console.log(results);
+                // }
 
                 const validResult = results
-                    .filter(({args, blockHash}) => this.isTimestampValid(args.timestamp) && !this.receivedHandshakeBlockHashSet.has(blockHash))
+                    .filter(({args, transactionHash}) => !this.inviteHashSet.has(transactionHash) && this.isTimestampValid(args.timestamp))
                     .sort((a, b) => a.blockNumber < b.blockNumber)[0]
 
                 if (validResult) {
                     // console.log(validResult);
                     this
-                        .receivedHandshakeBlockHashSet
-                        .add(validResult.blockHash);
+                        .inviteHashSet
+                        .add(validResult.transactionHash);
 
-                    this[`on${validResult.event}`](validResult.args)
+                    this[`on${validResult.event}`](validResult.args);
                 }
             })
         }, refreshRate);
@@ -161,41 +177,34 @@ export default class VanillinFacilitator extends EventEmitter {
         if (!this.otherGX)
             throw new Error('Did not receive other gx');
 
-        const gxBytes = aesjs
-            .utils
-            .hex
-            .toBytes(this.otherGX);
+        const gxPublic = this
+            .ecdh
+            .keyFromPublic(this.otherGX, 'hex')
+            .getPublic()
 
-        console.log(gxBytes);
-
-        const gAB = this
-            .dh
-            .computeSecret(new Uint8Array(gxBytes));
-
-        console.log(gAB);
-
-        this.key = aesjs
-            .utils
-            .hex
-            .toBytes(shake_128(gAB, 128));
+        this.key = this
+            .keypair
+            .derive(gxPublic)
+            .toArray()
     }
 
     get gx() {
-        return aesjs
-            .utils
-            .hex
-            .fromBytes(this.dh.generateKeys());
+        return this
+            .keypair
+            .getPublic('hex');
     }
 
     isTimestampValid(timestamp) {
-        return timestamp.c[0] * 10e2 > this.initTime
+        return timestamp.comparedTo(this.initTime) > 0
     }
 
     async storeEncrypted(data) {
         try {
             const encryptedData = this.encrypt(JSON.stringify(data));
+            // console.log(encryptedData);
 
             const node = await this.write(encryptedData);
+            // console.log(node);
 
             return node
                 .toJSON()
@@ -216,16 +225,19 @@ export default class VanillinFacilitator extends EventEmitter {
         const aesCtr = new aesjs
             .ModeOfOperation
             .ctr(this.key);
+
         const textBytes = aesjs
             .utils
             .utf8
             .toBytes(m);
+
         const encryptedBytes = aesCtr.encrypt(textBytes);
-        const encryptedHex = aesjs
+
+        // Return the hex presentation
+        return aesjs
             .utils
             .hex
             .fromBytes(encryptedBytes);
-        return encryptedHex;
     }
 
     decrypt(em) {
@@ -235,11 +247,15 @@ export default class VanillinFacilitator extends EventEmitter {
         const aesCtr = new aesjs
             .ModeOfOperation
             .ctr(this.key);
+
         const encryptedBytes = aesjs
             .utils
             .hex
             .toBytes(em);
+
         const decryptedBytes = aesCtr.decrypt(encryptedBytes);
+
+        // Return the utf8 presentation
         return aesjs
             .utils
             .utf8
@@ -262,58 +278,78 @@ export default class VanillinFacilitator extends EventEmitter {
         if (!this.ipfs.isOnline())
             throw new Error(`IPFS is not ready`);
 
-        const data = new Buffer(value);
+        const obj = {
+            Data: Buffer.from(value),
+            Links: []
+        }
 
         return this
             .ipfs
             .object
-            .put(data);
+            .put(obj);
     }
 
     /* Handle WebRTC Pairing Events */
 
-    handlePeerEvent() {
-        this
-            .peer
-            .on('signal', (data) => this.reply(data))
-            .on('connect', () => this.emit('connect', this.peer))
-            .on('data', (data) => this.emit('data', data))
-            .on('stream', (stream) => this.emit('stream', stream))
+    async handlePeerEvent() {
+        try {
+            this
+                .peer
+                .on('signal', (data) => this.onSignal(data))
+                .on('connect', () => this.emit('connect', this.peer))
+                .on('error', (error) => this.emit('error', error))
+
+            // .on('data', (data) => this.emit('data', data))
+            // .on('stream', (stream) => this.emit('stream', stream))
+        } catch (error) {
+            this.emit('error', error)
+        }
     }
 
     /* Abstraction for the contract's call */
 
     sendInvite(address) {
+        console.log('SEND INVITE');
         this
             .setOtherAddress(address)
             .contractInstance
             .init(this.otherAddress, this.gx, {from: this.accountAddress});
     }
 
-    async reply(data) {
-        console.log(data);
+    async onSignal(data) {
+        // console.log(data);
         const multihash = await this.storeEncrypted(data);
-        console.log(multihash);
+        // console.log(multihash);
 
         if (this.peer.initiator) {
+            console.log('REPLY');
             this
                 .contractInstance
                 .reply(this.otherAddress, this.gx, multihash, {from: this.accountAddress});
         } else {
+            console.log('FINALIZE');
             this
                 .contractInstance
-                .sendPayload(this.otherAddress, multihash, {from: this.accountAddress});
+                .finalize(this.otherAddress, multihash, {from: this.accountAddress});
         }
     }
 
     async handleInfo(multihash) {
+        // console.log(multihash);
+
         const value = await this.read(multihash)
+
+        // console.log(value);
 
         const em = value.toString()
 
         const decryptedData = await this.decrypt(em)
 
-        this.peer.signal(JSON.parse(decryptedData))
+        // console.log(decryptedData);
+
+        this
+            .peer
+            .signal(JSON.parse(decryptedData))
 
         this.emit('token', decryptedData)
     }
@@ -322,6 +358,7 @@ export default class VanillinFacilitator extends EventEmitter {
 
     // On receiving initial invite
     onDiffieOnly({from, gA}) {
+        console.log('onDiffieOnly');
         this
             .setOtherGX(gA)
             .setOtherAddress(from);
@@ -330,17 +367,19 @@ export default class VanillinFacilitator extends EventEmitter {
         this.handlePeerEvent();
     }
 
-    // On sending reply to invite
+    // On receiving reply and send back invite
     onDiffieIPFS({gB, ipfsRef}) {
+        // console.log('onDiffieIPFS');
         this.setOtherGX(gB)
 
         this.peer = new Peer({initiator: false, trickle: false});
-        this.handlePeerEvent();
+        this.handlePeerEvent()
         this.handleInfo(ipfsRef)
     }
 
     // On finalizing handshake
     onIPFSOnly({ipfsRef}) {
+        // console.log('onIPFSOnly');
         this.handleInfo(ipfsRef)
     }
 
