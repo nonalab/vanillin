@@ -6,10 +6,10 @@ import VanillinFacilitator from 'vanillin-facilitator';
 
 import styled from 'styled-components';
 
+import AccountInfo from 'sections/AccountInfo';
+import ConnectionLobby from 'sections/ConnectionLobby';
 import Conversation from 'sections/Conversation';
-
 import Setting from 'sections/Setting';
-
 import Footer from 'sections/Footer';
 
 import {
@@ -35,6 +35,8 @@ export default class Home extends PureComponent {
     render() {
         return(
             <Container>
+                <AccountInfo facilitator={this.facilitator}/>
+                <ConnectionLobby facilitator={this.facilitator}/>
                 <Conversation facilitator={this.facilitator}/>
                 <Setting facilitator={this.facilitator}/>
                 <Footer/>

@@ -131,7 +131,6 @@ export default class VanillinFacilitator extends EventEmitter {
 
     subscribeToContractEvent(eventName, fromBlock, refreshRate) {
         return setInterval(() => {
-
             const eventInstance = this.contractInstance[eventName]({
                 to: this.accountAddress
             }, {fromBlock, to: 'latest'})
@@ -358,7 +357,7 @@ export default class VanillinFacilitator extends EventEmitter {
 
     // On receiving initial invite
     onDiffieOnly({from, gA}) {
-        console.log('onDiffieOnly');
+        // console.log('onDiffieOnly');
         this
             .setOtherGX(gA)
             .setOtherAddress(from);

@@ -6,7 +6,7 @@
     "scripts": {
         "build": "truffle compile && babel src -d lib",
         "start": "babel src --watch -d lib",
-        "deploy": "rimraf ./build; npm run build; truffle compile; truffle migrate;",
+        "deploy": "rimraf ./build; truffle compile; npm run build; truffle migrate;",
         "test": "truffle test"
     },
     "devDependencies": {
