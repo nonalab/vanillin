@@ -30,10 +30,7 @@ export default class AccountInfo extends PureComponent {
         props
             .facilitator
             .on('ready', this.init)
-            .on('connect', this.onConnect)
     }
-
-    onConnect = () => {}
 
     init = () => {
         const {accountAddress} = this.props.facilitator;

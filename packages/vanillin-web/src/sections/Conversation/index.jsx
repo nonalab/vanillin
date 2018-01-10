@@ -47,17 +47,28 @@ export default class Conversation extends PureComponent {
 
         props
             .facilitator
-            .on('ready', this.init)
-            .on('connect', this.connect)
             .on('message', this.addMessage)
+    }
+
+    componentDidMount() {
+        const {avatars} = this.state;
+        const {
+            accountAddress,
+            otherAddress
+        } = this.props.facilitator;
+
+        avatars[accountAddress] = hashAvatar(accountAddress, {size: 90})
+        avatars[otherAddress] = hashAvatar(otherAddress, {size: 90})
+        this.setState({avatars});
     }
 
     init = () => {
         const {avatars} = this.state;
-        const {accountAddress} = this.props.facilitator;
+        const {
+            accountAddress,
+        } = this.props.facilitator;
 
         avatars[accountAddress] = hashAvatar(accountAddress, {size: 90})
-
         this.setState({avatars});
     }
 
@@ -100,7 +111,7 @@ export default class Conversation extends PureComponent {
                 placeholder='Message ...'
                 onSubmit={this.sendMessage}
                 buttonText='SEND'
-            />        
+            />
         </Container>);
     }
 }

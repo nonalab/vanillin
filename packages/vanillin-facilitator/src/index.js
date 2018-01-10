@@ -87,26 +87,30 @@ export default class VanillinFacilitator extends EventEmitter {
 
     // Initialize contract contractInstance and all event subscriptions
     async init() {
-        const [contractInstance, accounts] = await Promise.all([
-            this
+        try {
+            const [contractInstance, accounts] = await Promise.all([
+                this
                 .facilitatorContract
                 .deployed(),
-            this
+                this
                 .web3
                 .eth
                 .getAccounts(),
-            this
+                this
                 .ipfs
                 .isOnline()
-                    ? this.waitFor('ipfs-ready')
-                    : 0
-        ]);
+                ? this.waitFor('ipfs-ready')
+                : 0
+            ]);
 
-        this.accountAddress = accounts[0];
+            this.accountAddress = accounts[0];
 
-        this.contractInstance = contractInstance;
+            this.contractInstance = contractInstance;
 
-        this.emit('ready')
+            this.emit('ready')
+        } catch (error) {
+            this.emit('error', error)
+        }
     }
 
     send(message) {
