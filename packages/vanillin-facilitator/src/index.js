@@ -109,6 +109,33 @@ export default class VanillinFacilitator extends EventEmitter {
         this.emit('ready')
     }
 
+    send(message) {
+        if (!this.peer || this.peer.error) {
+            return this.emit('error', new Error('Simple Peer connection was not established'))
+        }
+
+        if (!message) {
+            return this.emit('error', new Error('Message is falsy'))
+        }
+
+        const payload = JSON.stringify(message);
+
+        if (payload === '{}') {
+            return this.emit('error', new Error('Message is empty object'))
+        }
+
+        if (!payload.type) {
+            return this.emit('error', new Error('Message has not type'))
+        }
+
+        this.emit(payload.type, payload)
+
+        this
+            .peer
+            .send(payload)
+    }
+
+    /* Contract event subscribers */
     async startEventWatching(refreshRate = 1800) {
         const fromBlock = await this
             .web3
@@ -173,8 +200,9 @@ export default class VanillinFacilitator extends EventEmitter {
     }
 
     setSharedKey() {
-        if (!this.otherGX)
-            throw new Error('Did not receive other gx');
+        if (!this.otherGX) {
+            return this.emit('error', new Error('Did not receive other gx'))
+        }
 
         const gxPublic = this
             .ecdh
@@ -296,7 +324,12 @@ export default class VanillinFacilitator extends EventEmitter {
                 .peer
                 .on('signal', (data) => this.onSignal(data))
                 .on('connect', () => this.emit('connect', this.peer))
-                .on('error', (error) => this.emit('error', error))
+                .on('data', (data) => this.emit(data.type, data))
+                .on('error', (error) => {
+                    this.peer.error = true
+
+                    this.emit('error', error)
+                })
 
             // .on('data', (data) => this.emit('data', data))
             // .on('stream', (stream) => this.emit('stream', stream))
@@ -362,7 +395,7 @@ export default class VanillinFacilitator extends EventEmitter {
             .setOtherGX(gA)
             .setOtherAddress(from);
 
-        this.peer = new Peer({initiator: true, trickle: false});
+        this.peer = new Peer({initiator: true});
         this.handlePeerEvent();
     }
 
@@ -371,7 +404,7 @@ export default class VanillinFacilitator extends EventEmitter {
         // console.log('onDiffieIPFS');
         this.setOtherGX(gB)
 
-        this.peer = new Peer({initiator: false, trickle: false});
+        this.peer = new Peer({initiator: false});
         this.handlePeerEvent()
         this.handleInfo(ipfsRef)
     }

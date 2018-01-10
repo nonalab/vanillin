@@ -2,9 +2,9 @@ import React, {
     PureComponent
 } from 'react';
 
-import VanillinFacilitator from 'vanillin-facilitator';
-
 import styled from 'styled-components';
+
+import VanillinFacilitator from 'vanillin-facilitator';
 
 import AccountInfo from 'sections/AccountInfo';
 import ConnectionLobby from 'sections/ConnectionLobby';
